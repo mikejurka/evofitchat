@@ -48,7 +48,7 @@ export const Chat = () => {
       const messageTop = messageElement.offsetTop;
       
       chatContainerRef.current.scrollTo({
-        top: messageTop - 60,
+        top: messageTop - 10,
         behavior: 'smooth'
       });
     }
@@ -94,7 +94,7 @@ export const Chat = () => {
   return (
     <div className={`chat-container ${theme}`}>
       <div className="top-bar">
-        <div className="logo">evo</div>
+        <div className="logo">fit by evo</div>
         <button className="menu-button" onClick={toggleMenu}>☰</button>
       </div>
       
@@ -105,34 +105,38 @@ export const Chat = () => {
         </div>
       </div>
       
-      <div className="messages-container" ref={chatContainerRef}>
-        {messages.map((message, index) => (
-          <div
-            key={message.id}
-            ref={index === messages.length - 1 ? lastMessageRef : null}
-            className={`message ${message.isUser ? 'user' : 'ai'}`}
-          >
-            {message.text}
+      <div className="chat-content">
+        <div className="messages-container" ref={chatContainerRef}>
+          <div className="messages-inner">
+            {messages.map((message, index) => (
+              <div
+                key={message.id}
+                ref={index === messages.length - 1 ? lastMessageRef : null}
+                className={`message ${message.isUser ? 'user' : 'ai'}`}
+              >
+                {message.text}
+              </div>
+            ))}
+            <div className="scroll-padding" />
           </div>
-        ))}
-        <div className="scroll-padding" />
-      </div>
-
-      <form onSubmit={handleSubmit} className="input-container">
-        <div className="input-wrapper">
-          <input
-            ref={inputRef}
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Ask evo anything"
-            className="message-input"
-          />
-          <button type="submit" className="send-button">
-            ↵
-          </button>
         </div>
-      </form>
+
+        <form onSubmit={handleSubmit} className="input-container">
+          <div className="input-wrapper">
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder="Ask"
+              className="message-input"
+            />
+            <button type="submit" className="send-button">
+              ↵
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }; 
