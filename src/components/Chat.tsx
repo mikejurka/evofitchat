@@ -21,9 +21,22 @@ export const Chat = () => {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [theme, setTheme] = useState<'dark' | 'wellness'>('dark');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const getRandomReply = () => {
     return FAKE_REPLIES[Math.floor(Math.random() * FAKE_REPLIES.length)];
@@ -34,9 +47,8 @@ export const Chat = () => {
       const containerHeight = chatContainerRef.current.clientHeight;
       const messageTop = messageElement.offsetTop;
       
-      // Scroll so that the message is at the top of the container
       chatContainerRef.current.scrollTo({
-        top: messageTop,
+        top: messageTop - 60,
         behavior: 'smooth'
       });
     }
@@ -55,14 +67,12 @@ export const Chat = () => {
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
 
-    // Scroll to the new message after it's rendered
     requestAnimationFrame(() => {
       if (lastMessageRef.current) {
         scrollToMessage(lastMessageRef.current);
       }
     });
 
-    // Add AI reply after a short delay
     setTimeout(() => {
       const aiMessage: Message = {
         id: messages.length + 2,
@@ -77,11 +87,23 @@ export const Chat = () => {
     setTheme(prev => prev === 'dark' ? 'wellness' : 'dark');
   };
 
+  const toggleMenu = () => {
+    setIsMenuOpen(prev => !prev);
+  };
+
   return (
     <div className={`chat-container ${theme}`}>
-      <button className="theme-toggle" onClick={toggleTheme}>
-        {theme === 'dark' ? '🌞' : '🌙'}
-      </button>
+      <div className="top-bar">
+        <div className="logo">evo</div>
+        <button className="menu-button" onClick={toggleMenu}>☰</button>
+      </div>
+      
+      <div className={`menu-backdrop ${isMenuOpen ? 'open' : ''}`} onClick={() => setIsMenuOpen(false)} />
+      <div ref={menuRef} className={`menu-overlay ${isMenuOpen ? 'open' : ''}`}>
+        <div className="menu-item" onClick={toggleTheme}>
+          {theme === 'dark' ? '🌞 Light Mode' : '🌙 Dark Mode'}
+        </div>
+      </div>
       
       <div className="messages-container" ref={chatContainerRef}>
         {messages.map((message, index) => (
@@ -97,17 +119,19 @@ export const Chat = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="input-container">
-        <input
-          ref={inputRef}
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Type your message..."
-          className="message-input"
-        />
-        <button type="submit" className="send-button">
-          Send
-        </button>
+        <div className="input-wrapper">
+          <input
+            ref={inputRef}
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="Ask evo anything"
+            className="message-input"
+          />
+          <button type="submit" className="send-button">
+            ↵
+          </button>
+        </div>
       </form>
     </div>
   );
