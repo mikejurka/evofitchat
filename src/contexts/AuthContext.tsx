@@ -32,11 +32,10 @@ export function useAuth() {
   return context;
 }
 
-// Helper function to detect mobile Safari/iOS
-function isMobileSafari() {
+// Helper function to detect any Safari browser
+function isSafari() {
   const ua = navigator.userAgent;
-  return /iPad|iPhone|iPod/.test(ua) || 
-         (/Safari/.test(ua) && !/Chrome/.test(ua) && !/Chromium/.test(ua) && /Mobile/.test(ua));
+  return /Safari/.test(ua) && !/Chrome/.test(ua) && !/Chromium/.test(ua);
 }
 
 // Helper function to detect iOS
@@ -66,12 +65,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       const isProduction = window.location.hostname.includes('firebaseapp.com') || window.location.hostname.includes('web.app');
+      const useSafariRedirect = isSafari() || isIOS();
       
       console.log('Environment check:');
       console.log('- Is localhost:', isLocalhost);
       console.log('- Is production:', isProduction);
+      console.log('- Use Safari redirect (Safari/iOS):', useSafariRedirect);
       console.log('- Hostname:', window.location.hostname);
+      console.log('- Full URL:', window.location.href);
       console.log('- Auth domain:', auth.app.options.authDomain);
+      console.log('- User agent:', navigator.userAgent);
+      
+      // Check Safari privacy settings that might interfere
+      console.log('Safari privacy checks:');
+      console.log('- Cookies enabled:', navigator.cookieEnabled);
+      console.log('- Local storage available:', typeof(Storage) !== "undefined");
+      console.log('- Session storage available:', typeof(sessionStorage) !== "undefined");
       
       if (isLocalhost) {
         // Use popup for localhost development
@@ -79,11 +88,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const result = await signInWithPopup(auth, googleProvider);
         console.log('Popup auth successful:', result.user?.email);
         return result;
-      } else if (isProduction && (isMobileSafari() || isIOS())) {
-        // Use redirect for mobile Safari/iOS in production
-        console.log('Using REDIRECT for mobile Safari/iOS in production');
+      } else if (isProduction && useSafariRedirect) {
+        // Use redirect for Safari/iOS in production
+        console.log('🚀 Using REDIRECT for Safari/iOS in production');
+        console.log('About to call signInWithRedirect...');
+        
+        // Check if we're already in a redirect flow
+        try {
+          const pendingResult = await getRedirectResult(auth);
+          if (pendingResult) {
+            console.log('Found pending redirect result:', pendingResult.user?.email);
+            return pendingResult;
+          }
+        } catch (pendingError: any) {
+          console.log('No pending redirect result (normal):', pendingError.message);
+        }
+        
+        console.log('Initiating redirect...');
         await signInWithRedirect(auth, googleProvider);
-        console.log('Redirect initiated for mobile Safari/iOS');
+        console.log('✅ signInWithRedirect call completed - should redirect now');
         return;
       } else {
         // Use popup for other cases
@@ -92,12 +115,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('Popup auth successful:', result.user?.email);
         return result;
       }
+      
     } catch (error: any) {
       console.error('=== GOOGLE LOGIN ERROR ===');
       console.error('Google login error:', error);
       console.error('Error code:', error.code);
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
+      
+      // Check for specific Safari/redirect errors
+      if (error.code === 'auth/unauthorized-domain') {
+        console.error('❌ DOMAIN NOT AUTHORIZED - Check Firebase Console > Authentication > Settings > Authorized domains');
+      } else if (error.code === 'auth/operation-not-allowed') {
+        console.error('❌ GOOGLE SIGN-IN NOT ENABLED - Check Firebase Console > Authentication > Sign-in method');
+      } else if (error.message?.includes('popup') || error.message?.includes('redirect')) {
+        console.error('❌ BROWSER BLOCKING - Safari privacy settings may be blocking the auth flow');
+      }
+      
       throw error;
     }
   }
@@ -107,19 +141,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    console.log('AuthProvider useEffect: Starting auth setup');
+    console.log('🔄 AuthProvider useEffect: Starting auth setup');
     console.log('Current URL on load:', window.location.href);
     console.log('URL search params:', window.location.search);
     console.log('URL hash:', window.location.hash);
     
+    // Check for specific redirect indicators
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasAuthParams = urlParams.has('state') || urlParams.has('code') || urlParams.has('error');
+    console.log('Has auth-related URL params:', hasAuthParams);
+    
+    if (hasAuthParams) {
+      console.log('🎯 Looks like we returned from an auth redirect!');
+      console.log('URL params:', Object.fromEntries(urlParams.entries()));
+    }
+    
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log('Auth state changed:', user?.email || 'null');
+      console.log('🔐 Auth state changed:', user?.email || 'null');
       if (user) {
-        console.log('User details:', {
+        console.log('✅ User authenticated:', {
           uid: user.uid,
           email: user.email,
           displayName: user.displayName,
-          photoURL: user.photoURL
+          providerId: user.providerData?.[0]?.providerId
         });
       }
       setCurrentUser(user);
@@ -127,27 +171,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Handle redirect result for Safari/iOS redirect flow
-    // This runs when the page loads after a redirect
-    console.log('Checking for redirect result...');
-    console.log('Auth instance:', auth);
-    console.log('Auth app:', auth.app.name);
+    console.log('🔍 Checking for redirect result...');
     
     getRedirectResult(auth).then((result) => {
-      console.log('getRedirectResult completed');
+      console.log('📋 getRedirectResult completed');
       if (result) {
-        console.log('Redirect auth successful!');
+        console.log('🎉 Redirect auth successful!');
         console.log('User:', result.user?.email);
         console.log('Provider:', result.providerId);
-        console.log('Full result:', result);
+        console.log('Operation type:', result.operationType || 'unknown');
         // User is already set via onAuthStateChanged, but we can log success
       } else {
-        console.log('No redirect result found (this is normal for non-redirect flows)');
+        console.log('ℹ️ No redirect result found (this is normal for non-redirect flows)');
       }
     }).catch((error) => {
-      console.error('getRedirectResult error:', error);
+      console.error('❌ getRedirectResult error:', error);
       console.error('Error code:', error.code);
       console.error('Error message:', error.message);
       console.error('Full error object:', error);
+      
+      // Specific error handling for redirect issues
+      if (error.code === 'auth/missing-iframe-start') {
+        console.error('🚨 Missing iframe start - this suggests the redirect flow was interrupted');
+      } else if (error.code === 'auth/network-request-failed') {
+        console.error('🌐 Network request failed - check internet connection');
+      } else if (error.message?.includes('initial state')) {
+        console.error('🔄 Initial state missing - redirect flow may have been corrupted');
+      }
+      
       // Don't set loading to false here, let onAuthStateChanged handle it
     });
 

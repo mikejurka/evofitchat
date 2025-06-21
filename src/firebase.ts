@@ -10,13 +10,13 @@ const firebaseConfig = {
   appId: "1:489077691547:web:59255c6d94e01dfab0623e"
 };
 
+console.log('Firebase initializing for domain:', window.location.hostname);
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
-console.log('Firebase auth initialized');
 
 // Set persistence to LOCAL to avoid Safari sessionStorage issues
 setPersistence(auth, browserLocalPersistence).then(() => {
@@ -36,6 +36,6 @@ googleProvider.setCustomParameters({
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
 
-console.log('Google provider configured and ready');
+console.log('Firebase Auth initialized successfully');
 
 export default app; 
