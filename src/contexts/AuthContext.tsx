@@ -46,8 +46,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return signOut(auth);
   }
 
-  function loginWithGoogle() {
-    return signInWithPopup(auth, googleProvider);
+  async function loginWithGoogle() {
+    try {
+      // Use signInWithPopup consistently as recommended by Google's docs
+      const result = await signInWithPopup(auth, googleProvider);
+      return result;
+    } catch (error: any) {
+      console.error('Google login error:', error);
+      throw error;
+    }
   }
 
   function resetPassword(email: string) {

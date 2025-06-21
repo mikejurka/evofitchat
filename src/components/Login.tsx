@@ -48,7 +48,24 @@ export function Login() {
       setLoading(true);
       await loginWithGoogle();
     } catch (error: any) {
-      setError('Failed to log in with Google: ' + error.message);
+      console.error('Google login error:', error);
+      
+      // Provide user-friendly error messages for common Safari issues
+      let errorMessage = 'Failed to log in with Google';
+      
+      if (error.code === 'auth/popup-blocked') {
+        errorMessage = 'Popup was blocked. Please allow popups for this site and try again.';
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        errorMessage = 'Login was cancelled. Please try again.';
+      } else if (error.message?.includes('sessionStorage') || error.message?.includes('initial state')) {
+        errorMessage = 'Browser privacy settings may be blocking login. Please try refreshing the page.';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      } else if (error.message) {
+        errorMessage += ': ' + error.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
