@@ -154,6 +154,22 @@
   opacity: 1;
 }
 
+.menu-item.user-info {
+  opacity: 0.7;
+  cursor: default;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 1rem;
+  padding-bottom: 1.5rem;
+}
+
+.wellness .menu-item.user-info {
+  border-bottom: 1px solid rgba(44, 62, 80, 0.1);
+}
+
+.menu-item.user-info:hover {
+  opacity: 0.7;
+}
+
 .messages-container {
   flex: 1;
   overflow-y: auto;

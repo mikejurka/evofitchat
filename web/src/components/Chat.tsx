@@ -14,7 +14,7 @@ interface ApiMessage {
 }
 
 export const Chat = () => {
-  const { logout } = useAuth();
+  const { logout, currentUser } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     { id: 1, text: "Hello! I'm your AI wellness companion. How can I help you today?", isUser: false }
   ]);
@@ -152,6 +152,9 @@ export const Chat = () => {
       
       <div className={`menu-backdrop ${isMenuOpen ? 'open' : ''}`} onClick={() => setIsMenuOpen(false)} />
       <div ref={menuRef} className={`menu-overlay ${isMenuOpen ? 'open' : ''}`}>
+        <div className="menu-item user-info">
+          👤 {currentUser?.displayName || currentUser?.email || 'User'}
+        </div>
         <div className="menu-item" onClick={toggleTheme}>
           {theme === 'dark' ? '🌞 Light Mode' : '🌙 Dark Mode'}
         </div>
