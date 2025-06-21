@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { getRedirectResult } from 'firebase/auth';
+import { auth } from '../firebase';
 import './Login.css';
 
 export function Login() {
@@ -22,6 +24,26 @@ export function Login() {
       setResetEmailSent(false);
     }
   }, [location.pathname]);
+
+  // Handle any redirect errors on component mount
+  useEffect(() => {
+    getRedirectResult(auth).catch((error) => {
+      if (error) {
+        console.error('Redirect error on login page:', error);
+        let errorMessage = 'Google sign-in failed';
+        
+        if (error.code === 'auth/network-request-failed') {
+          errorMessage = 'Network error during sign-in. Please try again.';
+        } else if (error.code === 'auth/unauthorized-domain') {
+          errorMessage = 'This domain is not authorized for Google sign-in.';
+        } else if (error.message) {
+          errorMessage += ': ' + error.message;
+        }
+        
+        setError(errorMessage);
+      }
+    });
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,20 +69,25 @@ export function Login() {
       setError('');
       setLoading(true);
       await loginWithGoogle();
+      
+      // For Safari/iOS using redirect, the page will navigate away
+      // so we won't reach this point. For other browsers using popup,
+      // we'll reach here on success.
+      
     } catch (error: any) {
       console.error('Google login error:', error);
       
-      // Provide user-friendly error messages for common Safari issues
+      // Provide user-friendly error messages
       let errorMessage = 'Failed to log in with Google';
       
       if (error.code === 'auth/popup-blocked') {
         errorMessage = 'Popup was blocked. Please allow popups for this site and try again.';
       } else if (error.code === 'auth/popup-closed-by-user') {
         errorMessage = 'Login was cancelled. Please try again.';
-      } else if (error.message?.includes('sessionStorage') || error.message?.includes('initial state')) {
-        errorMessage = 'Browser privacy settings may be blocking login. Please try refreshing the page.';
       } else if (error.code === 'auth/network-request-failed') {
         errorMessage = 'Network error. Please check your connection and try again.';
+      } else if (error.code === 'auth/unauthorized-domain') {
+        errorMessage = 'This domain is not authorized for Google sign-in.';
       } else if (error.message) {
         errorMessage += ': ' + error.message;
       }

@@ -3,6 +3,8 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
   signOut, 
   sendPasswordResetEmail,
   onAuthStateChanged 
@@ -30,6 +32,17 @@ export function useAuth() {
   return context;
 }
 
+// Helper function to detect Safari
+function isSafari() {
+  const ua = navigator.userAgent;
+  return /Safari/.test(ua) && !/Chrome/.test(ua) && !/Chromium/.test(ua);
+}
+
+// Helper function to detect iOS
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,9 +61,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function loginWithGoogle() {
     try {
-      // Use signInWithPopup consistently as recommended by Google's docs
-      const result = await signInWithPopup(auth, googleProvider);
-      return result;
+      // Use signInWithRedirect for Safari/iOS since we're hosted on firebaseapp.com
+      // This avoids popup blocking issues on Safari
+      if (isSafari() || isIOS()) {
+        console.log('Using redirect for Safari/iOS');
+        await signInWithRedirect(auth, googleProvider);
+        return; // signInWithRedirect doesn't return a result immediately
+      } else {
+        // Use popup for other browsers
+        console.log('Using popup for non-Safari browsers');
+        const result = await signInWithPopup(auth, googleProvider);
+        return result;
+      }
     } catch (error: any) {
       console.error('Google login error:', error);
       throw error;
@@ -64,6 +86,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
+      setLoading(false);
+    });
+
+    // Handle redirect result for Safari/iOS redirect flow
+    // This runs when the page loads after a redirect
+    getRedirectResult(auth).then((result) => {
+      if (result) {
+        console.log('Redirect auth successful:', result.user);
+        // User is already set via onAuthStateChanged, but we can log success
+      }
+    }).catch((error) => {
+      console.error('Redirect result error:', error);
+      // Set loading to false even if redirect fails
       setLoading(false);
     });
 
