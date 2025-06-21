@@ -8,13 +8,10 @@ interface Message {
   isUser: boolean;
 }
 
-const FAKE_REPLIES = [
-  "I understand how you feel. Let's work on that together.",
-  "That's a great question! Here's what I think...",
-  "I'm here to support you on your wellness journey.",
-  "Let me help you break that down into manageable steps.",
-  "That's an interesting perspective. Have you considered...",
-];
+interface ApiMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
 
 export const Chat = () => {
   const { logout } = useAuth();
@@ -22,6 +19,7 @@ export const Chat = () => {
     { id: 1, text: "Hello! I'm your AI wellness companion. How can I help you today?", isUser: false }
   ]);
   const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'wellness'>('dark');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -40,13 +38,41 @@ export const Chat = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const getRandomReply = () => {
-    return FAKE_REPLIES[Math.floor(Math.random() * FAKE_REPLIES.length)];
+  const callChatAPI = async (conversationHistory: Message[]): Promise<string> => {
+    try {
+      // Convert messages to API format, excluding the initial greeting
+      const apiMessages: ApiMessage[] = conversationHistory
+        .slice(1) // Skip the initial greeting message
+        .map(msg => ({
+          role: msg.isUser ? 'user' : 'assistant',
+          content: msg.text
+        }));
+
+      const response = await fetch('https://mjagent-490766333568.us-central1.run.app/chat/completion', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer invalid-token',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: apiMessages
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.content || 'Sorry, I encountered an error processing your request.';
+    } catch (error) {
+      console.error('API call failed:', error);
+      return 'Sorry, I\'m having trouble connecting right now. Please try again later.';
+    }
   };
 
   const scrollToMessage = (messageElement: HTMLElement) => {
     if (chatContainerRef.current) {
-      const containerHeight = chatContainerRef.current.clientHeight;
       const messageTop = messageElement.offsetTop;
       
       chatContainerRef.current.scrollTo({
@@ -56,9 +82,9 @@ export const Chat = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: messages.length + 1,
@@ -66,8 +92,10 @@ export const Chat = () => {
       isUser: true
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInputValue('');
+    setIsLoading(true);
 
     requestAnimationFrame(() => {
       if (lastMessageRef.current) {
@@ -75,14 +103,27 @@ export const Chat = () => {
       }
     });
 
-    setTimeout(() => {
+    try {
+      const aiResponse = await callChatAPI(updatedMessages);
+      
       const aiMessage: Message = {
-        id: messages.length + 2,
-        text: getRandomReply(),
+        id: updatedMessages.length + 1,
+        text: aiResponse,
         isUser: false
       };
+      
       setMessages(prev => [...prev, aiMessage]);
-    }, 1000);
+    } catch (error) {
+      console.error('Failed to get AI response:', error);
+      const errorMessage: Message = {
+        id: updatedMessages.length + 1,
+        text: 'Sorry, I encountered an error. Please try again.',
+        isUser: false
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const toggleTheme = () => {
@@ -131,6 +172,15 @@ export const Chat = () => {
                 {message.text}
               </div>
             ))}
+            {isLoading && (
+              <div className="message ai loading">
+                <span className="typing-indicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </span>
+              </div>
+            )}
             <div className="scroll-padding" />
           </div>
         </div>
@@ -144,8 +194,9 @@ export const Chat = () => {
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Ask"
               className="message-input"
+              disabled={isLoading}
             />
-            <button type="submit" className="send-button">
+            <button type="submit" className="send-button" disabled={isLoading}>
               ↵
             </button>
           </div>
