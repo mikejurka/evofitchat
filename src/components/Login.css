@@ -39,27 +39,16 @@
   width: 100%;
   max-width: 400px;
   padding: 2rem;
-  border-radius: 1rem;
   transition: all 0.3s ease;
   font-family: 'Monaspace Neon', monospace;
   font-weight: 300;
-}
-
-/* Dark theme card */
-:root.dark .auth-card {
-  background-color: var(--dark-bubble-ai);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Wellness theme card */
-:root:not(.dark) .auth-card {
-  background-color: var(--wellness-bubble-ai);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: none;
+  border: none;
 }
 
 .auth-card h2 {
   margin: 0 0 8px 0;
-  font-size: 1.8rem;
+  font-size: 1.2rem;
   font-weight: 300;
   text-align: center;
   letter-spacing: 1px;
@@ -99,22 +88,22 @@
 
 /* Dark theme inputs */
 :root.dark .form-group input {
-  background-color: var(--dark-bubble-user);
+  background-color: var(--dark-bubble-ai);
   color: var(--dark-text);
 }
 
 :root.dark .form-group input:focus {
-  background-color: #5a5a5a;
+  opacity: 0.8;
 }
 
 /* Wellness theme inputs */
 :root:not(.dark) .form-group input {
-  background-color: var(--wellness-bubble-user);
+  background-color: var(--wellness-bubble-ai);
   color: var(--wellness-text);
 }
 
 :root:not(.dark) .form-group input:focus {
-  background-color: #c4b4a7;
+  opacity: 0.8;
 }
 
 .btn-primary {
@@ -138,7 +127,7 @@
 }
 
 :root.dark .btn-primary:hover:not(:disabled) {
-  background-color: #5a5a5a;
+  opacity: 0.8;
   transform: translateY(-1px);
 }
 
@@ -149,7 +138,7 @@
 }
 
 :root:not(.dark) .btn-primary:hover:not(:disabled) {
-  background-color: #c4b4a7;
+  opacity: 0.8;
   transform: translateY(-1px);
 }
 
@@ -199,14 +188,12 @@
   position: relative;
 }
 
-.divider::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  opacity: 0.3;
+.divider span {
+  padding: 0 1rem;
+  font-size: 0.9rem;
+  opacity: 0.7;
+  font-weight: 300;
+  background: none;
 }
 
 /* Dark theme divider */
@@ -219,22 +206,15 @@
   background: var(--wellness-text);
 }
 
-.divider span {
-  padding: 0 1rem;
-  font-size: 0.9rem;
-  opacity: 0.7;
-  font-weight: 300;
-}
-
 /* Dark theme divider background */
 :root.dark .divider span {
-  background: var(--dark-bubble-ai);
+  background: var(--dark-bg);
   color: var(--dark-text);
 }
 
 /* Wellness theme divider background */
 :root:not(.dark) .divider span {
-  background: var(--wellness-bubble-ai);
+  background: var(--wellness-bg);
   color: var(--wellness-text);
 }
 

@@ -141,8 +141,8 @@ export function Login() {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h2>Welcome Back</h2>
-        <p className="auth-subtitle">Sign in to your account</p>
+        <h2>fit by evo</h2>
+        <p className="auth-subtitle">Sign In</p>
         
         {error && <div className="error-message">{error}</div>}
         
