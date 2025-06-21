@@ -79,18 +79,28 @@
   right: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  background: none;
-  border: none;
+  background: none !important;
+  border: none !important;
   font-size: 1.2rem;
   cursor: pointer;
   padding: 0.5rem;
   transition: opacity 0.3s ease;
   color: inherit;
   opacity: 0.9;
+  border-radius: 0 !important;
 }
 
 .menu-button:hover {
   opacity: 1;
+  background: none !important;
+  border: none !important;
+}
+
+.menu-button:focus,
+.menu-button:focus-visible {
+  outline: none !important;
+  background: none !important;
+  border: none !important;
 }
 
 .menu-backdrop {
@@ -266,8 +276,8 @@
 .send-button {
   position: absolute;
   right: 1rem;
-  background: none;
-  border: none;
+  background: none !important;
+  border: none !important;
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0.5rem;
@@ -276,20 +286,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 0 !important;
 }
 
 .dark .send-button {
-  background-color: var(--dark-bubble-user);
+  background-color: var(--dark-bubble-user) !important;
   color: var(--dark-text);
+  border-radius: 0.5rem !important;
 }
 
 .wellness .send-button {
-  background-color: var(--wellness-bubble-user);
+  background-color: var(--wellness-bubble-user) !important;
   color: var(--wellness-text);
+  border-radius: 0.5rem !important;
 }
 
 .send-button:hover {
   opacity: 0.7;
+  background: none !important;
+  border: none !important;
+}
+
+.send-button:focus,
+.send-button:focus-visible {
+  outline: none !important;
+  background: none !important;
+  border: none !important;
 }
 
 @media (max-width: 768px) {

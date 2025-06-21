@@ -1,30 +1,35 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Login } from './components/Login';
 import { Signup } from './components/Signup';
-import { Dashboard } from './components/Dashboard';
+import { Chat } from './components/Chat';
 import './App.css';
 
 function AppContent() {
   const { currentUser } = useAuth();
-  const [showSignup, setShowSignup] = useState(false);
 
   if (!currentUser) {
-    return showSignup ? (
-      <Signup onSwitchToLogin={() => setShowSignup(false)} />
-    ) : (
-      <Login onSwitchToSignup={() => setShowSignup(true)} />
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/reset-password" element={<Login />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
     );
   }
 
-  return <Dashboard />;
+  return <Chat />;
 }
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <Router>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </Router>
   );
 }
 

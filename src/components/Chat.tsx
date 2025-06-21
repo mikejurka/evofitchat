@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import './Chat.css';
 
 interface Message {
@@ -16,6 +17,7 @@ const FAKE_REPLIES = [
 ];
 
 export const Chat = () => {
+  const { logout } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     { id: 1, text: "Hello! I'm your AI wellness companion. How can I help you today?", isUser: false }
   ]);
@@ -91,6 +93,15 @@ export const Chat = () => {
     setIsMenuOpen(prev => !prev);
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setIsMenuOpen(false);
+    } catch (error) {
+      console.error('Failed to log out:', error);
+    }
+  };
+
   return (
     <div className={`chat-container ${theme}`}>
       <div className="top-bar">
@@ -102,6 +113,9 @@ export const Chat = () => {
       <div ref={menuRef} className={`menu-overlay ${isMenuOpen ? 'open' : ''}`}>
         <div className="menu-item" onClick={toggleTheme}>
           {theme === 'dark' ? '🌞 Light Mode' : '🌙 Dark Mode'}
+        </div>
+        <div className="menu-item" onClick={handleLogout}>
+          🚪 Sign Out
         </div>
       </div>
       

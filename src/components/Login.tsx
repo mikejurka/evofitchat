@@ -1,20 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import './Login.css';
 
-interface LoginProps {
-  onSwitchToSignup: () => void;
-}
-
-export function Login({ onSwitchToSignup }: LoginProps) {
+export function Login() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(location.pathname === '/reset-password');
   const [resetEmailSent, setResetEmailSent] = useState(false);
   
   const { login, loginWithGoogle, resetPassword } = useAuth();
+
+  // Update forgot password state when URL changes
+  useEffect(() => {
+    setIsForgotPassword(location.pathname === '/reset-password');
+    if (location.pathname === '/login') {
+      setResetEmailSent(false);
+    }
+  }, [location.pathname]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -67,6 +74,18 @@ export function Login({ onSwitchToSignup }: LoginProps) {
     }
   }
 
+  const goToSignup = () => {
+    navigate('/signup');
+  };
+
+  const goToLogin = () => {
+    navigate('/login');
+  };
+
+  const goToResetPassword = () => {
+    navigate('/reset-password');
+  };
+
   if (isForgotPassword) {
     return (
       <div className="auth-container">
@@ -79,6 +98,7 @@ export function Login({ onSwitchToSignup }: LoginProps) {
                 onClick={() => {
                   setIsForgotPassword(false);
                   setResetEmailSent(false);
+                  goToLogin();
                 }}
                 className="btn-secondary"
               >
@@ -103,7 +123,10 @@ export function Login({ onSwitchToSignup }: LoginProps) {
               </button>
               <button 
                 type="button" 
-                onClick={() => setIsForgotPassword(false)}
+                onClick={() => {
+                  setIsForgotPassword(false);
+                  goToLogin();
+                }}
                 className="btn-secondary"
               >
                 Back to Login
@@ -171,14 +194,14 @@ export function Login({ onSwitchToSignup }: LoginProps) {
         
         <div className="auth-links">
           <button 
-            onClick={() => setIsForgotPassword(true)}
+            onClick={goToResetPassword}
             className="link-button"
           >
             Forgot Password?
           </button>
           <span>Don't have an account? </span>
           <button 
-            onClick={onSwitchToSignup}
+            onClick={goToSignup}
             className="link-button"
           >
             Sign Up

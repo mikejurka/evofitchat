@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import './Login.css';
 
-interface SignupProps {
-  onSwitchToLogin: () => void;
-}
-
-export function Signup({ onSwitchToLogin }: SignupProps) {
+export function Signup() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -55,6 +53,10 @@ export function Signup({ onSwitchToLogin }: SignupProps) {
       setLoading(false);
     }
   }
+
+  const goToLogin = () => {
+    navigate('/login');
+  };
 
   return (
     <div className="auth-container">
@@ -126,7 +128,7 @@ export function Signup({ onSwitchToLogin }: SignupProps) {
         <div className="auth-links">
           <span>Already have an account? </span>
           <button 
-            onClick={onSwitchToLogin}
+            onClick={goToLogin}
             className="link-button"
           >
             Sign In
