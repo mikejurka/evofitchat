@@ -16,9 +16,12 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
+console.log('Firebase auth initialized');
 
 // Set persistence to LOCAL to avoid Safari sessionStorage issues
-setPersistence(auth, browserLocalPersistence).catch((error) => {
+setPersistence(auth, browserLocalPersistence).then(() => {
+  console.log('Auth persistence set to browserLocalPersistence');
+}).catch((error) => {
   console.error('Error setting auth persistence:', error);
 });
 
@@ -32,5 +35,7 @@ googleProvider.setCustomParameters({
 // Add required scopes for better Safari compatibility
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
+
+console.log('Google provider configured and ready');
 
 export default app; 

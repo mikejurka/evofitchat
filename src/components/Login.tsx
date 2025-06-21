@@ -27,15 +27,29 @@ export function Login() {
 
   // Handle any redirect errors on component mount
   useEffect(() => {
-    getRedirectResult(auth).catch((error) => {
+    console.log('Login component: Checking for redirect result...');
+    getRedirectResult(auth).then((result) => {
+      if (result) {
+        console.log('Login component: Redirect result found:', result.user?.email);
+      } else {
+        console.log('Login component: No redirect result');
+      }
+    }).catch((error) => {
       if (error) {
-        console.error('Redirect error on login page:', error);
+        console.error('Login component: Redirect error:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        
         let errorMessage = 'Google sign-in failed';
         
         if (error.code === 'auth/network-request-failed') {
           errorMessage = 'Network error during sign-in. Please try again.';
         } else if (error.code === 'auth/unauthorized-domain') {
           errorMessage = 'This domain is not authorized for Google sign-in.';
+        } else if (error.code === 'auth/invalid-api-key') {
+          errorMessage = 'Invalid API configuration. Please contact support.';
+        } else if (error.message?.includes('initial state')) {
+          errorMessage = 'Authentication state error. Please try again.';
         } else if (error.message) {
           errorMessage += ': ' + error.message;
         }
