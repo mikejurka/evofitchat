@@ -207,7 +207,14 @@ export const Chat = () => {
 
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
-    setInputValue('');
+    
+    // Blur input first to commit any pending autocorrect, then clear
+    inputRef.current?.blur();
+    setTimeout(() => {
+      setInputValue('');
+      inputRef.current?.focus();
+    }, 50);
+    
     setIsLoading(true);
 
     // Scroll to position user's message at top of window
