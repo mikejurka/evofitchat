@@ -208,14 +208,20 @@ export const Chat = () => {
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     
-    // Blur input first to commit any pending autocorrect, then clear
-    inputRef.current?.blur();
+    // Handle iOS autocorrect race condition without losing keyboard focus
+    setInputValue('');
     setTimeout(() => {
-      setInputValue('');
-      inputRef.current?.focus();
-    }, 50);
+      setInputValue(''); // Second clear to catch late autocorrect
+    }, 100);
     
-    setIsLoading(true);
+    // Add loading indicator as a message to avoid FlashList data recreation
+    const loadingMessage: Message = {
+      id: updatedMessages.length + 1,
+      text: '',
+      isUser: false,
+      isLoading: true
+    };
+    setMessages([...updatedMessages, loadingMessage]);
 
     // Scroll to position user's message at top of window
     setTimeout(() => {
@@ -230,24 +236,28 @@ export const Chat = () => {
     try {
       const aiResponse = await callChatAPI(updatedMessages);
       
-      const aiMessage: Message = {
-        id: updatedMessages.length + 1,
-        text: aiResponse,
-        isUser: false
-      };
-      
-      // Add AI message without scrolling
-      setMessages(prev => [...prev, aiMessage]);
+      // Remove loading message and add AI response
+      setMessages(prev => {
+        const withoutLoading = prev.filter(msg => !msg.isLoading);
+        const aiMessage: Message = {
+          id: withoutLoading.length + 1,
+          text: aiResponse,
+          isUser: false
+        };
+        return [...withoutLoading, aiMessage];
+      });
     } catch (error) {
       console.error('Failed to get AI response:', error);
-      const errorMessage: Message = {
-        id: updatedMessages.length + 1,
-        text: 'Sorry, I encountered an error. Please try again.',
-        isUser: false
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
+      // Remove loading message and add error message
+      setMessages(prev => {
+        const withoutLoading = prev.filter(msg => !msg.isLoading);
+        const errorMessage: Message = {
+          id: withoutLoading.length + 1,
+          text: 'Sorry, I encountered an error. Please try again.',
+          isUser: false
+        };
+        return [...withoutLoading, errorMessage];
+      });
     }
   };
 
@@ -368,7 +378,7 @@ export const Chat = () => {
           <FlashList
             key={theme} // Force re-render when theme changes
             ref={flashListRef}
-            data={isLoading ? [...messages, { id: messages.length + 1, text: '', isUser: false, isLoading: true }] : messages}
+            data={messages}
             renderItem={({ item }) => {
               if (item.isLoading) {
                 return (
