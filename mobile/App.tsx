@@ -1,19 +1,51 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import * as Font from 'expo-font';
+import { RobotoMono_300Light } from '@expo-google-fonts/roboto-mono';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Chat } from './components/Chat';
+import { View, Text, StyleSheet } from 'react-native';
 
 export default function App() {
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  useEffect(() => {
+    const loadFonts = async () => {
+      try {
+        await Font.loadAsync({
+          RobotoMono_300Light,
+        });
+        setFontsLoaded(true);
+      } catch (error) {
+        console.warn('Error loading fonts:', error);
+        // Continue without custom fonts
+        setFontsLoaded(true);
+      }
+    };
+
+    loadFonts();
+  }, []);
+
+  if (!fontsLoaded) {
+    return (
+      <SafeAreaProvider>
+        <View style={styles.loadingContainer}>
+          <Text>Loading...</Text>
+        </View>
+      </SafeAreaProvider>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaProvider>
+      <Chat />
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  loadingContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1a1a',
     alignItems: 'center',
     justifyContent: 'center',
   },
