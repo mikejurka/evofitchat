@@ -4,12 +4,12 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
   StyleSheet,
   Platform,
   StatusBar,
   Modal,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedKeyboard,
@@ -24,6 +24,7 @@ interface Message {
   id: number;
   text: string;
   isUser: boolean;
+  isLoading?: boolean;
 }
 
 interface ApiMessage {
@@ -33,16 +34,80 @@ interface ApiMessage {
 
 type Theme = 'dark' | 'wellness';
 
+// Generate fake messages for performance testing
+const generateFakeMessages = (): Message[] => {
+  const fakeMessages: Message[] = [];
+  const userMessages = [
+    "How can I improve my fitness?",
+    "What should I eat for breakfast?",
+    "I'm feeling stressed today",
+    "Can you help me with a workout plan?",
+    "How many calories should I eat?",
+    "I had trouble sleeping last night",
+    "What's a good stretching routine?",
+    "I want to lose weight",
+    "How often should I exercise?",
+    "I need motivation to work out",
+    "What are some healthy snacks?",
+    "How do I stay consistent with my goals?",
+    "I'm having trouble with my diet",
+    "Can you recommend some yoga poses?",
+    "How much water should I drink daily?",
+    "I feel overwhelmed with my health goals",
+    "What's the best time to work out?",
+    "How do I track my progress?",
+    "I need help with meal planning",
+    "What supplements should I take?"
+  ];
+  
+  const aiMessages = [
+    "Great question! Let me help you with that.",
+    "I'd recommend starting with small, manageable changes to build sustainable habits.",
+    "That's completely normal, and I'm here to support you through this journey.",
+    "Here's a personalized approach based on your current fitness level and goals.",
+    "The key is finding what works for your lifestyle and preferences.",
+    "Let's break this down into actionable steps you can implement today.",
+    "I understand that can be challenging. Here's what I suggest...",
+    "Consistency is more important than perfection. Let's focus on progress, not perfection.",
+    "That's a wonderful goal! Here's how we can work towards it together.",
+    "Remember, every small step counts towards your bigger health objectives.",
+    "I'm glad you're taking this step towards better health.",
+    "Let's create a plan that feels sustainable and enjoyable for you.",
+    "Your wellness journey is unique, and I'm here to guide you every step of the way.",
+    "That's a common concern, and there are several strategies we can explore.",
+    "Building healthy habits takes time, so be patient and kind to yourself.",
+    "I appreciate you sharing that with me. Let's work on a solution together.",
+    "Your health and wellbeing are worth investing in, and you're making great choices.",
+    "Let's focus on creating positive changes that will support your long-term success.",
+    "I'm here to help you navigate these challenges with evidence-based guidance.",
+    "Remember, progress isn't always linear, and that's perfectly okay."
+  ];
+
+  fakeMessages.push({ id: 1, text: "Hello! I'm your AI wellness companion. How can I help you today?", isUser: false });
+  
+  for (let i = 2; i <= 10000; i++) {
+    const isUser = i % 2 === 0;
+    const messageArray = isUser ? userMessages : aiMessages;
+    const randomMessage = messageArray[Math.floor(Math.random() * messageArray.length)];
+    
+    fakeMessages.push({
+      id: i,
+      text: randomMessage,
+      isUser: isUser
+    });
+  }
+  
+  return fakeMessages;
+};
+
 export const Chat = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    { id: 1, text: "Hello! I'm your AI wellness companion. How can I help you today?", isUser: false }
-  ]);
+  const [messages, setMessages] = useState<Message[]>(generateFakeMessages());
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [theme, setTheme] = useState<Theme>('dark');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const flashListRef = useRef<FlashList<Message>>(null);
   const inputRef = useRef<TextInput>(null);
   const typingOpacity = useSharedValue(0.3);
   const menuTranslateX = useSharedValue(300); // Start off-screen to the right
@@ -133,7 +198,7 @@ export const Chat = () => {
 
     // Scroll to bottom
     setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
+      flashListRef.current?.scrollToEnd({ animated: true });
     }, 100);
 
     try {
@@ -267,29 +332,36 @@ export const Chat = () => {
             messagesAnimatedStyle
           ]}
         >
-          <ScrollView
-            ref={scrollViewRef}
-            style={styles.messagesContainer}
-            contentContainerStyle={styles.messagesContent}
+          <FlashList
+            key={theme} // Force re-render when theme changes
+            ref={flashListRef}
+            data={isLoading ? [...messages, { id: messages.length + 1, text: '', isUser: false, isLoading: true }] : messages}
+            renderItem={({ item }) => {
+              if (item.isLoading) {
+                return (
+                  <View style={[styles.messageBubble, styles.aiBubble, styles.loadingBubble]}>
+                    <TypingIndicator />
+                  </View>
+                );
+              }
+              
+              return (
+                <View
+                  style={[
+                    styles.messageBubble,
+                    item.isUser ? styles.userBubble : styles.aiBubble
+                  ]}
+                >
+                  <Text style={styles.messageText}>{item.text}</Text>
+                </View>
+              );
+            }}
+            estimatedItemSize={60}
+            initialScrollIndex={messages.length - 1}
             showsVerticalScrollIndicator={false}
-          >
-            {messages.map((message) => (
-              <View
-                key={message.id}
-                style={[
-                  styles.messageBubble,
-                  message.isUser ? styles.userBubble : styles.aiBubble
-                ]}
-              >
-                <Text style={styles.messageText}>{message.text}</Text>
-              </View>
-            ))}
-            {isLoading && (
-              <View style={[styles.messageBubble, styles.aiBubble, styles.loadingBubble]}>
-                <TypingIndicator />
-              </View>
-            )}
-          </ScrollView>
+            contentContainerStyle={styles.messagesContent}
+            style={styles.messagesContainer}
+          />
         </Animated.View>
 
         {/* Input Container with smooth keyboard animation */}
@@ -415,7 +487,6 @@ const createStyles = (theme: Theme) => {
     },
     messagesContainer: {
       flex: 1,
-      paddingHorizontal: 16,
     },
     messagesContent: {
       paddingBottom: 8,
@@ -426,6 +497,7 @@ const createStyles = (theme: Theme) => {
       paddingVertical: 12,
       borderRadius: 16,
       marginVertical: 4,
+      marginHorizontal: 16,
     },
     aiBubble: {
       alignSelf: 'flex-start',
