@@ -6,14 +6,19 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Dimensions,
-  KeyboardAvoidingView,
   Platform,
   StatusBar,
   Modal,
-  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, {
+  useAnimatedKeyboard,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  withRepeat,
+  withSequence,
+} from 'react-native-reanimated';
 
 interface Message {
   id: number;
@@ -28,8 +33,6 @@ interface ApiMessage {
 
 type Theme = 'dark' | 'wellness';
 
-const { width, height } = Dimensions.get('window');
-
 export const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([
     { id: 1, text: "Hello! I'm your AI wellness companion. How can I help you today?", isUser: false }
@@ -39,25 +42,22 @@ export const Chat = () => {
   const [theme, setTheme] = useState<Theme>('dark');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
-  const typingOpacity = useRef(new Animated.Value(0.3)).current;
+  const typingOpacity = useSharedValue(0.3);
+  const keyboard = useAnimatedKeyboard();
 
   useEffect(() => {
-    // Animate typing indicator
+    // Animate typing indicator with Reanimated
     if (isLoading) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(typingOpacity, {
-            toValue: 1,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(typingOpacity, {
-            toValue: 0.3,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
+      typingOpacity.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 500 }),
+          withTiming(0.3, { duration: 500 })
+        ),
+        -1,
+        false
+      );
+    } else {
+      typingOpacity.value = withTiming(0.3, { duration: 200 });
     }
   }, [isLoading]);
 
@@ -146,11 +146,30 @@ export const Chat = () => {
 
   const styles = createStyles(theme);
 
+  // Animated styles for keyboard
+  const messagesAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      marginBottom: keyboard.height.value,
+    };
+  });
+
+  const inputAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: -keyboard.height.value }],
+    };
+  });
+
+  const typingAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: typingOpacity.value,
+    };
+  });
+
   const TypingIndicator = () => (
     <View style={styles.typingContainer}>
-      <Animated.View style={[styles.typingDot, { opacity: typingOpacity }]} />
-      <Animated.View style={[styles.typingDot, { opacity: typingOpacity }]} />
-      <Animated.View style={[styles.typingDot, { opacity: typingOpacity }]} />
+      <Animated.View style={[styles.typingDot, typingAnimatedStyle]} />
+      <Animated.View style={[styles.typingDot, typingAnimatedStyle]} />
+      <Animated.View style={[styles.typingDot, typingAnimatedStyle]} />
     </View>
   );
 
@@ -191,37 +210,48 @@ export const Chat = () => {
         </View>
       </Modal>
 
-      <KeyboardAvoidingView 
-        style={styles.chatContent}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+            <View style={styles.chatContent}>
         {/* Messages */}
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.messagesContainer}
-          contentContainerStyle={styles.messagesContent}
-          showsVerticalScrollIndicator={false}
+        <Animated.View 
+          style={[
+            {
+              flex: 1,
+            },
+            messagesAnimatedStyle
+          ]}
         >
-          {messages.map((message) => (
-            <View
-              key={message.id}
-              style={[
-                styles.messageBubble,
-                message.isUser ? styles.userBubble : styles.aiBubble
-              ]}
-            >
-              <Text style={styles.messageText}>{message.text}</Text>
-            </View>
-          ))}
-          {isLoading && (
-            <View style={[styles.messageBubble, styles.aiBubble, styles.loadingBubble]}>
-              <TypingIndicator />
-            </View>
-          )}
-        </ScrollView>
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.messagesContainer}
+            contentContainerStyle={styles.messagesContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {messages.map((message) => (
+              <View
+                key={message.id}
+                style={[
+                  styles.messageBubble,
+                  message.isUser ? styles.userBubble : styles.aiBubble
+                ]}
+              >
+                <Text style={styles.messageText}>{message.text}</Text>
+              </View>
+            ))}
+            {isLoading && (
+              <View style={[styles.messageBubble, styles.aiBubble, styles.loadingBubble]}>
+                <TypingIndicator />
+              </View>
+            )}
+          </ScrollView>
+        </Animated.View>
 
-        {/* Input Container */}
-        <View style={styles.inputContainer}>
+        {/* Input Container with smooth keyboard animation */}
+        <Animated.View 
+          style={[
+            styles.inputContainer,
+            inputAnimatedStyle
+          ]}
+        >
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.textInput}
@@ -242,8 +272,8 @@ export const Chat = () => {
               <Text style={styles.sendButtonText}>↵</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </KeyboardAvoidingView>
+        </Animated.View>
+      </View>
     </SafeAreaView>
   );
 };
