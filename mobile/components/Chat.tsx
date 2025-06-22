@@ -163,7 +163,7 @@ export const Chat = () => {
       // Move with keyboard + additional offset for tighter positioning
       transform: [{ translateY: -keyboard.height.value + (keyboardProgress * 12) }],
       // Reduce padding smoothly when keyboard appears
-      paddingBottom: Math.max(insets.bottom, 16) * (1 - keyboardProgress),
+      paddingBottom: Math.max(insets.bottom, 8) * (1 - keyboardProgress),
       // Add negative margin to push closer to keyboard (discovered during testing)
       marginBottom: keyboardProgress * -12,
     };
@@ -226,6 +226,7 @@ export const Chat = () => {
           style={[
             {
               flex: 1,
+              marginBottom: 0,
             },
             messagesAnimatedStyle
           ]}
@@ -259,7 +260,8 @@ export const Chat = () => {
         <Animated.View 
           style={[
             styles.inputContainer,
-            inputAnimatedStyle
+            inputAnimatedStyle,
+            { marginTop: 0 }
           ]}
         >
                       <TouchableOpacity 
@@ -373,7 +375,7 @@ const createStyles = (theme: Theme) => {
       paddingHorizontal: 16,
     },
     messagesContent: {
-      paddingBottom: 20,
+      paddingBottom: 8,
     },
     messageBubble: {
       maxWidth: '80%',
@@ -415,17 +417,17 @@ const createStyles = (theme: Theme) => {
     },
     inputContainer: {
       paddingHorizontal: 16,
-      paddingTop: 16,
+      paddingTop: 0,
       backgroundColor: isDark ? '#1a1a1a' : '#FDFBF0',
     },
     inputWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: isDark ? '#2d2d2d' : '#F5F3E9',
-      borderRadius: 24,
+      borderRadius: 28,
       paddingHorizontal: 16,
-      paddingVertical: 10,
-      minHeight: 44,
+      paddingVertical: 12,
+      minHeight: 52,
     },
     textInput: {
       flex: 1,
@@ -436,21 +438,24 @@ const createStyles = (theme: Theme) => {
       textAlignVertical: 'center',
       paddingTop: 0,
       paddingBottom: 0,
+      paddingRight: 46, // Reserve space for blue button
       includeFontPadding: false,
       textAlign: 'left',
     },
     sendButtonContainer: {
-      width: 36,
-      height: 36,
+      position: 'absolute',
+      right: 10,
+      bottom: 7,
+      width: 38,
+      height: 38,
       alignItems: 'center',
       justifyContent: 'center',
-      marginLeft: 4,
     },
     sendButton: {
       backgroundColor: '#007AFF', // iMessage blue
-      borderRadius: 18,
-      width: 36,
-      height: 36,
+      borderRadius: 19,
+      width: 38,
+      height: 38,
       alignItems: 'center',
       justifyContent: 'center',
       paddingTop: 2,
