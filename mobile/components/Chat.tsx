@@ -262,31 +262,35 @@ export const Chat = () => {
             inputAnimatedStyle
           ]}
         >
-          <TouchableOpacity 
-            style={styles.inputWrapper}
-            onPress={() => inputRef.current?.focus()}
-            activeOpacity={1}
-          >
-            <TextInput
-              ref={inputRef}
-              style={styles.textInput}
-              value={inputValue}
-              onChangeText={setInputValue}
-              placeholder="Ask"
-              placeholderTextColor={theme === 'dark' ? '#888' : '#999'}
-              multiline
-              editable={!isLoading}
-              onSubmitEditing={handleSubmit}
-              returnKeyType="send"
-            />
-            <TouchableOpacity 
-              onPress={handleSubmit} 
-              style={styles.sendButton}
-              disabled={isLoading}
+                      <TouchableOpacity 
+              style={styles.inputWrapper}
+              onPress={() => inputRef.current?.focus()}
+              activeOpacity={1}
             >
-              <Text style={styles.sendButtonText}>↵</Text>
+              <TextInput
+                ref={inputRef}
+                style={styles.textInput}
+                value={inputValue}
+                onChangeText={setInputValue}
+                placeholder="Ask"
+                placeholderTextColor={theme === 'dark' ? '#888' : '#999'}
+                multiline
+                editable={!isLoading}
+                returnKeyType="default"
+                keyboardAppearance={theme === 'dark' ? 'dark' : 'light'}
+              />
+              <View style={styles.sendButtonContainer}>
+                {inputValue.trim() && (
+                  <TouchableOpacity 
+                    onPress={handleSubmit} 
+                    style={styles.sendButton}
+                    disabled={isLoading}
+                  >
+                    <Text style={styles.sendButtonText}>↑</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </TouchableOpacity>
-          </TouchableOpacity>
         </Animated.View>
       </View>
     </SafeAreaView>
@@ -420,8 +424,8 @@ const createStyles = (theme: Theme) => {
       backgroundColor: isDark ? '#2d2d2d' : '#F5F3E9',
       borderRadius: 24,
       paddingHorizontal: 16,
-      paddingVertical: 12,
-      minHeight: 48,
+      paddingVertical: 10,
+      minHeight: 44,
     },
     textInput: {
       flex: 1,
@@ -429,24 +433,33 @@ const createStyles = (theme: Theme) => {
       color: isDark ? '#ffffff' : '#2c3e50',
       fontFamily: 'RobotoMono_300Light',
       fontWeight: '300',
-      maxHeight: 120,
       textAlignVertical: 'center',
       paddingTop: 0,
       paddingBottom: 0,
       includeFontPadding: false,
       textAlign: 'left',
     },
+    sendButtonContainer: {
+      width: 36,
+      height: 36,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginLeft: 4,
+    },
     sendButton: {
-      backgroundColor: isDark ? '#4a4a4a' : '#EBE9E0',
-      borderRadius: 8,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      marginLeft: 8,
+      backgroundColor: '#007AFF', // iMessage blue
+      borderRadius: 18,
+      width: 36,
+      height: 36,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingTop: 2,
     },
     sendButtonText: {
-      fontSize: 18,
-      color: isDark ? '#ffffff' : '#2c3e50',
-      fontWeight: '500',
+      fontSize: 24,
+      color: '#ffffff',
+      fontWeight: '600',
+      lineHeight: 24,
     },
   });
 }; 
