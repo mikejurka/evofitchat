@@ -471,6 +471,9 @@ const createStyles = (theme: Theme) => {
       paddingHorizontal: 16,
       paddingVertical: 12,
       minHeight: 52,
+      maxWidth: 600, // Cap width on larger screens
+      alignSelf: 'center',
+      width: '100%',
     },
     textInput: {
       flex: 1,
@@ -484,6 +487,17 @@ const createStyles = (theme: Theme) => {
       paddingRight: 46, // Reserve space for blue button
       includeFontPadding: false,
       textAlign: 'left',
+      ...Platform.select({
+        web: {
+          outlineWidth: 0, // Remove blue focus border on web
+          outlineStyle: 'none',
+          borderWidth: 0, // Remove border
+          height: '24px', // Fixed single line height
+          lineHeight: '24px',
+          paddingTop: '2px', // Fine-tune vertical centering
+          paddingBottom: '2px',
+        } as any, // Web-specific styles
+      }),
     },
     sendButtonContainer: {
       position: 'absolute',
