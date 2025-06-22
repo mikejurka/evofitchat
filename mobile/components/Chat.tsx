@@ -358,7 +358,7 @@ export const Chat = () => {
             }}
             estimatedItemSize={60}
             initialScrollIndex={messages.length - 1}
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={true}
             contentContainerStyle={styles.messagesContent}
             style={styles.messagesContainer}
           />
@@ -484,6 +484,9 @@ const createStyles = (theme: Theme) => {
     },
     chatContent: {
       flex: 1,
+      maxWidth: 800,
+      alignSelf: 'center',
+      width: '100%',
     },
     messagesContainer: {
       flex: 1,
@@ -543,9 +546,6 @@ const createStyles = (theme: Theme) => {
       paddingHorizontal: 16,
       paddingVertical: 12,
       minHeight: 52,
-      maxWidth: 600, // Cap width on larger screens
-      alignSelf: 'center',
-      width: '100%',
     },
     textInput: {
       flex: 1,
