@@ -10,7 +10,7 @@ import {
   StatusBar,
   Modal,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedKeyboard,
   useAnimatedStyle,
@@ -44,6 +44,7 @@ export const Chat = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const typingOpacity = useSharedValue(0.3);
   const keyboard = useAnimatedKeyboard();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     // Animate typing indicator with Reanimated
@@ -154,8 +155,16 @@ export const Chat = () => {
   });
 
   const inputAnimatedStyle = useAnimatedStyle(() => {
+    // Calculate smooth progress: 0 when keyboard down, 1 when fully up
+    const keyboardProgress = keyboard.height.value > 0 ? Math.min(keyboard.height.value / 300, 1) : 0;
+    
     return {
-      transform: [{ translateY: -keyboard.height.value }],
+      // Move with keyboard + additional offset for tighter positioning
+      transform: [{ translateY: -keyboard.height.value + (keyboardProgress * 12) }],
+      // Reduce padding smoothly when keyboard appears
+      paddingBottom: Math.max(insets.bottom, 16) * (1 - keyboardProgress),
+      // Add negative margin to push closer to keyboard (discovered during testing)
+      marginBottom: keyboardProgress * -12,
     };
   });
 
@@ -396,7 +405,7 @@ const createStyles = (theme: Theme) => {
     },
     inputContainer: {
       paddingHorizontal: 16,
-      paddingVertical: 16,
+      paddingTop: 16,
       backgroundColor: isDark ? '#1a1a1a' : '#FDFBF0',
     },
     inputWrapper: {
