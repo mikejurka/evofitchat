@@ -42,6 +42,7 @@ export const Chat = () => {
   const [theme, setTheme] = useState<Theme>('dark');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
   const typingOpacity = useSharedValue(0.3);
   const keyboard = useAnimatedKeyboard();
   const insets = useSafeAreaInsets();
@@ -261,8 +262,13 @@ export const Chat = () => {
             inputAnimatedStyle
           ]}
         >
-          <View style={styles.inputWrapper}>
+          <TouchableOpacity 
+            style={styles.inputWrapper}
+            onPress={() => inputRef.current?.focus()}
+            activeOpacity={1}
+          >
             <TextInput
+              ref={inputRef}
               style={styles.textInput}
               value={inputValue}
               onChangeText={setInputValue}
@@ -280,7 +286,7 @@ export const Chat = () => {
             >
               <Text style={styles.sendButtonText}>↵</Text>
             </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
         </Animated.View>
       </View>
     </SafeAreaView>
@@ -410,7 +416,7 @@ const createStyles = (theme: Theme) => {
     },
     inputWrapper: {
       flexDirection: 'row',
-      alignItems: 'flex-end',
+      alignItems: 'center',
       backgroundColor: isDark ? '#2d2d2d' : '#F5F3E9',
       borderRadius: 24,
       paddingHorizontal: 16,
@@ -419,12 +425,16 @@ const createStyles = (theme: Theme) => {
     },
     textInput: {
       flex: 1,
-      fontSize: 16,
+      fontSize: 18,
       color: isDark ? '#ffffff' : '#2c3e50',
       fontFamily: 'RobotoMono_300Light',
       fontWeight: '300',
       maxHeight: 120,
       textAlignVertical: 'center',
+      paddingTop: 0,
+      paddingBottom: 0,
+      includeFontPadding: false,
+      textAlign: 'left',
     },
     sendButton: {
       backgroundColor: isDark ? '#4a4a4a' : '#EBE9E0',
