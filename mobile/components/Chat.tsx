@@ -252,10 +252,11 @@ export const Chat = () => {
     setIsMenuOpen(prev => !prev);
   };
 
-  // Calculate bottom padding to prevent over-scrolling
+  // Calculate bottom padding to prevent over-scrolling  
   const topBarHeight = 60;
-  const inputAreaHeight = 80; // Approximate height of input container + padding
-  const bottomPadding = Math.max(0, windowDimensions.height - topBarHeight - inputAreaHeight);
+  const inputAreaHeight = 80;
+  const scrollViewHeight = windowDimensions.height - topBarHeight - inputAreaHeight - insets.top - insets.bottom;
+  const bottomPadding = scrollViewHeight - 24; // 100% of scroll view height minus 24px
   
   const styles = createStyles(theme, bottomPadding);
 
