@@ -8,6 +8,7 @@ import {
   Platform,
   StatusBar,
   Modal,
+  Dimensions,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,6 +34,9 @@ interface ApiMessage {
 }
 
 type Theme = 'dark' | 'wellness';
+
+// Number of fake messages to exclude from API calls
+const FAKE_MESSAGES_COUNT = 10000;
 
 // Generate fake messages for performance testing
 const generateFakeMessages = (): Message[] => {
@@ -107,6 +111,7 @@ export const Chat = () => {
   const [theme, setTheme] = useState<Theme>('dark');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const [windowDimensions, setWindowDimensions] = useState(Dimensions.get('window'));
   const flashListRef = useRef<FlashList<Message>>(null);
   const inputRef = useRef<TextInput>(null);
   const typingOpacity = useSharedValue(0.3);
@@ -149,11 +154,20 @@ export const Chat = () => {
     }
   }, [isMenuOpen]);
 
+  useEffect(() => {
+    // Listen for window dimension changes
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setWindowDimensions(window);
+    });
+
+    return () => subscription?.remove();
+  }, []);
+
   const callChatAPI = async (conversationHistory: Message[]): Promise<string> => {
     try {
-      // Convert messages to API format, excluding the initial greeting
+      // Convert messages to API format, excluding fake messages
       const apiMessages: ApiMessage[] = conversationHistory
-        .slice(1) // Skip the initial greeting message
+        .slice(FAKE_MESSAGES_COUNT) // Skip all fake messages, only send real conversation
         .map(msg => ({
           role: msg.isUser ? 'user' : 'assistant',
           content: msg.text
@@ -196,9 +210,14 @@ export const Chat = () => {
     setInputValue('');
     setIsLoading(true);
 
-    // Scroll to bottom
+    // Scroll to position user's message at top of window
     setTimeout(() => {
-      flashListRef.current?.scrollToEnd({ animated: true });
+      const userMessageIndex = updatedMessages.length - 1;
+      flashListRef.current?.scrollToIndex({ 
+        index: userMessageIndex, 
+        animated: true,
+        viewPosition: 0 // Position at top of view
+      });
     }, 100);
 
     try {
@@ -210,6 +229,7 @@ export const Chat = () => {
         isUser: false
       };
       
+      // Add AI message without scrolling
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
       console.error('Failed to get AI response:', error);
@@ -232,7 +252,12 @@ export const Chat = () => {
     setIsMenuOpen(prev => !prev);
   };
 
-  const styles = createStyles(theme);
+  // Calculate bottom padding to prevent over-scrolling
+  const topBarHeight = 60;
+  const inputAreaHeight = 80; // Approximate height of input container + padding
+  const bottomPadding = Math.max(0, windowDimensions.height - topBarHeight - inputAreaHeight);
+  
+  const styles = createStyles(theme, bottomPadding);
 
   // Animated styles for keyboard
   const messagesAnimatedStyle = useAnimatedStyle(() => {
@@ -407,7 +432,7 @@ export const Chat = () => {
   );
 };
 
-const createStyles = (theme: Theme) => {
+const createStyles = (theme: Theme, bottomPadding: number = 0) => {
   const isDark = theme === 'dark';
   
   return StyleSheet.create({
@@ -492,7 +517,7 @@ const createStyles = (theme: Theme) => {
       flex: 1,
     },
     messagesContent: {
-      paddingBottom: 8,
+      paddingBottom: Math.max(8, bottomPadding),
     },
     messageBubble: {
       maxWidth: '80%',
