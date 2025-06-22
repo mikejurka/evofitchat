@@ -41,9 +41,12 @@ export const Chat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [theme, setTheme] = useState<Theme>('dark');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
   const typingOpacity = useSharedValue(0.3);
+  const menuTranslateX = useSharedValue(300); // Start off-screen to the right
+  const menuOpacity = useSharedValue(0);
   const keyboard = useAnimatedKeyboard();
   const insets = useSafeAreaInsets();
 
@@ -62,6 +65,24 @@ export const Chat = () => {
       typingOpacity.value = withTiming(0.3, { duration: 200 });
     }
   }, [isLoading]);
+
+  useEffect(() => {
+    // Animate menu slide from right
+    if (isMenuOpen) {
+      setIsMenuVisible(true); // Show Modal first
+      menuOpacity.value = withTiming(1, { duration: 300 });
+      menuTranslateX.value = withTiming(0, { duration: 300 });
+    } else {
+      // Animate out, then hide Modal
+      menuOpacity.value = withTiming(0, { duration: 300 });
+      menuTranslateX.value = withTiming(300, { duration: 300 });
+      
+      // Hide Modal after animation completes
+      setTimeout(() => {
+        setIsMenuVisible(false);
+      }, 300);
+    }
+  }, [isMenuOpen]);
 
   const callChatAPI = async (conversationHistory: Message[]): Promise<string> => {
     try {
@@ -175,6 +196,19 @@ export const Chat = () => {
     };
   });
 
+  const menuAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: menuTranslateX.value }],
+      opacity: menuOpacity.value,
+    };
+  });
+
+  const backdropAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: menuOpacity.value,
+    };
+  });
+
   const TypingIndicator = () => (
     <View style={styles.typingContainer}>
       <Animated.View style={[styles.typingDot, typingAnimatedStyle]} />
@@ -200,23 +234,25 @@ export const Chat = () => {
 
       {/* Menu Modal */}
       <Modal
-        visible={isMenuOpen}
+        visible={isMenuVisible}
         transparent={true}
-        animationType="slide"
+        animationType="none"
         onRequestClose={() => setIsMenuOpen(false)}
       >
         <View style={styles.modalOverlay}>
-          <TouchableOpacity 
-            style={styles.modalBackdrop} 
-            onPress={() => setIsMenuOpen(false)}
-          />
-          <View style={styles.menuContainer}>
-            <TouchableOpacity style={styles.menuItem} onPress={toggleTheme}>
+          <Animated.View style={[styles.modalBackdrop, backdropAnimatedStyle]}>
+            <TouchableOpacity 
+              style={{ flex: 1 }} 
+              onPress={() => setIsMenuOpen(false)}
+            />
+          </Animated.View>
+          <Animated.View style={[styles.menuContainer, menuAnimatedStyle]}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => { toggleTheme(); setIsMenuOpen(false); }}>
               <Text style={styles.menuItemText}>
                 {theme === 'dark' ? '🌞 Light Mode' : '🌙 Dark Mode'}
               </Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         </View>
       </Modal>
 
@@ -328,20 +364,27 @@ const createStyles = (theme: Theme) => {
       padding: 8,
     },
     menuButtonText: {
-      fontSize: 18,
+      fontSize: 24,
       color: isDark ? '#ffffff' : '#2c3e50',
       opacity: 0.9,
     },
     modalOverlay: {
       flex: 1,
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
+      position: 'relative',
     },
     modalBackdrop: {
-      flex: 1,
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     menuContainer: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
       width: 250,
       backgroundColor: isDark ? '#1a1a1a' : '#FDFBF0',
       paddingTop: 60,
